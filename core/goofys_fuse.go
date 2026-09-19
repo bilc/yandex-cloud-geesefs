@@ -96,7 +96,11 @@ func (fs *GoofysFuse) GetInodeAttributes(
 
 	atomic.AddInt64(&fs.stats.metadataReads, 1)
 
-	inode := fs.getInodeOrDie(op.Inode)
+	inode := fs.getInode(op.Inode)
+	if inode == nil {
+		// The inode may have been concurrently forgotten or evicted.
+		return syscall.ESTALE
+	}
 
 	if atomic.LoadInt32(&inode.CacheState) == ST_DEAD {
 		// Stale inode

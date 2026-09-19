@@ -407,6 +407,16 @@ func (fs *Goofys) SigUsr1() {
 	debug.FreeOSMemory()
 }
 
+// Find the given inode, returning nil if it has already been forgotten or
+// evicted.
+//
+// LOCKS_EXCLUDED(fs.mu)
+func (fs *Goofys) getInode(id fuseops.InodeID) (inode *Inode) {
+	fs.mu.RLock()
+	defer fs.mu.RUnlock()
+	return fs.inodes[id]
+}
+
 // Find the given inode. Panic if it doesn't exist.
 //
 // LOCKS_EXCLUDED(fs.mu)

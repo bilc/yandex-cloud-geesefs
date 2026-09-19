@@ -676,6 +676,23 @@ func (s *GoofysTest) TestUnmountBucketWithChild(t *C) {
 	verifyFileData(t, rootMountPath, "c/c/x/foo", &ccFileContent)
 }
 
+func (s *GoofysTest) TestGetAttributesOfUnknownInodeReturnsStaleNoCloud(t *C) {
+	flags := cfg.DefaultFlags()
+	backend := &TestBackend{err: syscall.ENOSYS}
+	fs, err := newGoofys(context.Background(), "test", flags, func(string, *cfg.FlagStorage) (StorageBackend, error) {
+		return backend, nil
+	})
+	t.Assert(err, IsNil)
+	defer fs.Shutdown()
+
+	op := fuseops.GetInodeAttributesOp{
+		Inode: fuseops.InodeID(123456789),
+	}
+	err = NewGoofysFuse(fs).GetInodeAttributes(context.Background(), &op)
+
+	t.Assert(err, Equals, syscall.ESTALE)
+}
+
 // Specific to "lowlevel" fuse, so also checked here
 func (s *GoofysTest) TestConcurrentRefDeref(t *C) {
 	fsint := NewGoofysFuse(s.fs)

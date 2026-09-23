@@ -26,17 +26,18 @@ import (
 )
 
 var syslogHook *logrus_syslog.SyslogHook
+var newSyslogHook = logrus_syslog.NewSyslogHook
 
 func InitLoggers(logFile string) {
 	if logFile == "syslog" {
-		var err error
-		syslogHook, err = logrus_syslog.NewSyslogHook("", "", syslog.LOG_DEBUG, "")
+		hook, err := newSyslogHook("", "", syslog.LOG_DEBUG, "")
 		if err != nil {
 			// we are the child process and we cannot connect to syslog,
 			// probably because we are in a container without syslog
 			// nothing much we can do here, printing to stderr doesn't work
 			return
 		}
+		syslogHook = hook
 		for _, l := range loggers {
 			l.Hooks.Add(syslogHook)
 		}
